@@ -42,5 +42,5 @@ steps:
   inputs:
     azureSubscription: 'action-filter-api'
     appType: webApp
-    appName: 'ActionFilterAPI'
+    appName: ActionFilterAPI
     package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
