@@ -74,6 +74,20 @@ stages:
           - download: current
             artifact: drop
 
+          - task: AzureAppServiceSettings@1
+            displayName: Set App Service Settings
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appName: 'ActionFilterAPI'
+              appSettings: |
+                [
+                  {
+                    "name": "WEBSITE_RUN_FROM_PACKAGE",
+                    "value": "0",
+                    "slotSetting": false
+                  }
+                ]
+
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'action-filters-api'
@@ -98,6 +112,20 @@ stages:
           - download: current
             artifact: drop
 
+          - task: AzureAppServiceSettings@1
+            displayName: Set App Service Settings
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appName: 'ActionFilterAPI'
+              appSettings: |
+                [
+                  {
+                    "name": "WEBSITE_RUN_FROM_PACKAGE",
+                    "value": "0",
+                    "slotSetting": false
+                  }
+                ]
+
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'action-filters-api'
@@ -121,6 +149,20 @@ stages:
           steps:
           - download: current
             artifact: drop
+
+          - task: AzureAppServiceSettings@1
+            displayName: Set App Service Settings
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appName: 'ActionFilterAPI'
+              appSettings: |
+                [
+                  {
+                    "name": "WEBSITE_RUN_FROM_PACKAGE",
+                    "value": "0",
+                    "slotSetting": false
+                  }
+                ]
 
           - task: AzureWebApp@1
             inputs:
