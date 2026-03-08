@@ -9,7 +9,6 @@ variables:
   buildConfiguration: 'Release'
 
 stages:
-
 # ==============================
 # BUILD STAGE (CI)
 # ==============================
@@ -18,7 +17,6 @@ stages:
   jobs:
   - job: BuildJob
     steps:
-
     - task: NuGetToolInstaller@1
 
     - task: NuGetCommand@2
@@ -40,17 +38,12 @@ stages:
         command: publish
         publishWebProjects: true
         arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish'
-
-#    - task: ArchiveFiles@2
-#      inputs:
-#        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
-#       includeRootFolder: false
-#        archiveType: zip
-#        archiveFile: '$(Build.ArtifactStagingDirectory)/artifact/app.zip'
+        zipAfterPublish: true
+        modifyOutputPath: false
 
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/artifact'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish'
         ArtifactName: drop
 
 # ==============================
@@ -66,7 +59,6 @@ stages:
       runOnce:
         deploy:
           steps:
-
           - download: current
             artifact: drop
 
@@ -91,7 +83,6 @@ stages:
       runOnce:
         deploy:
           steps:
-
           - download: current
             artifact: drop
 
@@ -101,6 +92,7 @@ stages:
               appType: webApp
               appName: 'ActionFilterAPI'
               package: '$(Pipeline.Workspace)/drop/*.zip'
+              deploymentMethod: zipDeploy
 
 # ==============================
 # DEPLOY TO PRODUCTION
@@ -115,7 +107,6 @@ stages:
       runOnce:
         deploy:
           steps:
-
           - download: current
             artifact: drop
 
@@ -125,3 +116,4 @@ stages:
               appType: webApp
               appName: 'ActionFilterAPI'
               package: '$(Pipeline.Workspace)/drop/*.zip'
+              deploymentMethod: zipDeploy
