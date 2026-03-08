@@ -41,6 +41,18 @@ stages:
         zipAfterPublish: true
         modifyOutputPath: false
 
+    - powershell: |
+        $zips = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)/publish" -Filter "*.zip"
+        Write-Host "Found zips: $($zips.Count)"
+        foreach ($zip in $zips) { Write-Host $zip.FullName }
+        if ($zips.Count -gt 1) {
+          Copy-Item $zips[0].FullName "$(Build.ArtifactStagingDirectory)/publish/app.zip"
+          $zips | Remove-Item
+        } else {
+          Rename-Item $zips[0].FullName "app.zip"
+        }
+      displayName: Rename zip to app.zip
+
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish'
@@ -67,7 +79,7 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/*.zip'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
               deploymentMethod: zipDeploy
 
 # ==============================
@@ -91,7 +103,7 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/*.zip'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
               deploymentMethod: zipDeploy
 
 # ==============================
@@ -115,5 +127,5 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/*.zip'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
               deploymentMethod: zipDeploy
