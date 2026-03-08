@@ -41,12 +41,12 @@ stages:
         publishWebProjects: true
         arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish'
 
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/artifact/app.zip'
+#    - task: ArchiveFiles@2
+#      inputs:
+#        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
+#       includeRootFolder: false
+#        archiveType: zip
+#        archiveFile: '$(Build.ArtifactStagingDirectory)/artifact/app.zip'
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -75,7 +75,7 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/app.zip'
+              package: '$(Pipeline.Workspace)/drop/*.zip'
               deploymentMethod: zipDeploy
 
 # ==============================
@@ -100,7 +100,7 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/app.zip'
+              package: '$(Pipeline.Workspace)/drop/*.zip'
 
 # ==============================
 # DEPLOY TO PRODUCTION
@@ -124,4 +124,4 @@ stages:
               azureSubscription: 'action-filters-api'
               appType: webApp
               appName: 'ActionFilterAPI'
-              package: '$(Pipeline.Workspace)/drop/app.zip'
+              package: '$(Pipeline.Workspace)/drop/*.zip'
