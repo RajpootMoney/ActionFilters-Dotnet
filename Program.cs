@@ -1,29 +1,44 @@
-using Microsoft.EntityFrameworkCore;
 using ActionFiltersAPI.Data;
 using ActionFiltersAPI.Filters;
 using ActionFiltersAPI.Middleware;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+builder.Host.UseSerilog();
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Action Filters API",
-        Version = "v1",
-        Description = "Demonstrates Action Filters, Exception Filters, Custom Middleware, Request Pipeline, Model Binding, and Data Annotations"
-    });
+    c.SwaggerDoc(
+        "v1",
+        new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Title = "Action Filters API",
+            Version = "v1",
+            Description =
+                "Demonstrates Action Filters, Exception Filters, Custom Middleware, Request Pipeline, Model Binding, and Data Annotations"
+        }
+    );
 });
 
 // Configure SQLite Database
 // Connection string is in appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 // Register Action Filters and Exception Filters as services
 // This allows them to use dependency injection
@@ -39,6 +54,7 @@ builder.Services.AddControllers(options =>
 });
 
 var app = builder.Build();
+app.UseSerilogRequestLogging();
 
 // ============================================================================
 // REQUEST PIPELINE CONFIGURATION
@@ -49,11 +65,12 @@ var app = builder.Build();
 // ============================================================================
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Action Filters API v1");
+    c.RoutePrefix = "swagger";
+});
 
 // 1. EXCEPTION HANDLING MIDDLEWARE (should be early in pipeline)
 // This catches exceptions that aren't handled by Exception Filters
@@ -129,4 +146,3 @@ using (var scope = app.Services.CreateScope())
 // ============================================================================
 
 app.Run();
-

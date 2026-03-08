@@ -61,4 +61,3 @@ namespace ActionFiltersAPI.Models
         Cancelled
     }
 }
-

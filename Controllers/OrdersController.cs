@@ -1,14 +1,14 @@
+using ActionFiltersAPI.Data;
+using ActionFiltersAPI.Filters;
+using ActionFiltersAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ActionFiltersAPI.Data;
-using ActionFiltersAPI.Models;
-using ActionFiltersAPI.Filters;
 
 namespace ActionFiltersAPI.Controllers
 {
     /// <summary>
     /// Orders Controller
-    /// 
+    ///
     /// Demonstrates:
     /// - Complex model binding (nested objects)
     /// - Multiple validation scenarios
@@ -16,16 +16,14 @@ namespace ActionFiltersAPI.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    [ServiceFilter(typeof(LoggingActionFilter))]
-    [ServiceFilter(typeof(ValidationActionFilter))]
+    //[ServiceFilter(typeof(LoggingActionFilter))]
+    //[ServiceFilter(typeof(ValidationActionFilter))]
     public class OrdersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<OrdersController> _logger;
 
-        public OrdersController(
-            ApplicationDbContext context,
-            ILogger<OrdersController> logger)
+        public OrdersController(ApplicationDbContext context, ILogger<OrdersController> logger)
         {
             _context = context;
             _logger = logger;
@@ -37,11 +35,11 @@ namespace ActionFiltersAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
-            var orders = await _context.Orders
-                .Include(o => o.OrderItems)
+            var orders = await _context
+                .Orders.Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
                 .ToListAsync();
-            
+
             return Ok(orders);
         }
 
@@ -51,8 +49,8 @@ namespace ActionFiltersAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
+            var order = await _context
+                .Orders.Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -66,16 +64,16 @@ namespace ActionFiltersAPI.Controllers
 
         /// <summary>
         /// POST /api/orders
-        /// 
+        ///
         /// COMPLEX MODEL BINDING EXAMPLE:
         /// - Order object with nested OrderItems collection
         /// - Framework automatically binds nested JSON structure
-        /// 
+        ///
         /// VALIDATION EXAMPLE:
         /// - Order properties validated (CustomerName, Email, etc.)
         /// - OrderItem properties validated (Quantity, UnitPrice, etc.)
         /// - All validation errors collected in ModelState
-        /// 
+        ///
         /// EXCEPTION HANDLING EXAMPLE:
         /// - If product not found, KeyNotFoundException thrown
         /// - Exception Filter will catch and return appropriate response
@@ -92,14 +90,14 @@ namespace ActionFiltersAPI.Controllers
             //     { "productId": 1, "quantity": 2, "unitPrice": 10.50 }
             //   ]
             // }
-            
+
             // VALIDATION:
             // All Data Annotations on Order and OrderItem are validated
             // ValidationActionFilter checks ModelState before this executes
 
             // Calculate total amount
             decimal totalAmount = 0;
-            
+
             foreach (var item in order.OrderItems)
             {
                 // Verify product exists
@@ -126,29 +124,24 @@ namespace ActionFiltersAPI.Controllers
             await _context.SaveChangesAsync();
 
             // Load related data for response
-            await _context.Entry(order)
+            await _context
+                .Entry(order)
                 .Collection(o => o.OrderItems)
                 .Query()
                 .Include(oi => oi.Product)
                 .LoadAsync();
 
-            return CreatedAtAction(
-                nameof(GetOrder),
-                new { id = order.Id },
-                order
-            );
+            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
         }
 
         /// <summary>
         /// PUT /api/orders/5/status
-        /// 
+        ///
         /// MODEL BINDING: Route parameter + query parameter
         /// Example: PUT /api/orders/5/status?status=Shipped
         /// </summary>
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateOrderStatus(
-            int id,
-            [FromQuery] OrderStatus status)
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromQuery] OrderStatus status)
         {
             // MODEL BINDING:
             // - "id" from route: /api/orders/5/status
@@ -173,8 +166,8 @@ namespace ActionFiltersAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
+            var order = await _context
+                .Orders.Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
@@ -189,4 +182,3 @@ namespace ActionFiltersAPI.Controllers
         }
     }
 }
-

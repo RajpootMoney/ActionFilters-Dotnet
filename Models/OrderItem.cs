@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ActionFiltersAPI.Models
 {
@@ -28,10 +29,10 @@ namespace ActionFiltersAPI.Models
 
         // Navigation properties
         [ForeignKey("OrderId")]
+        [JsonIgnore]
         public Order? Order { get; set; }
 
         [ForeignKey("ProductId")]
         public Product? Product { get; set; }
     }
 }
-
