@@ -39,17 +39,18 @@ stages:
       inputs:
         command: publish
         publishWebProjects: true
-        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish'
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
+        includeRootFolder: false
         archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/artifact/app.zip'
 
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/artifact/app.zip'
         ArtifactName: drop
 
 # ==============================
