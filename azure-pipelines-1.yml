@@ -1,0 +1,131 @@
+trigger:
+- main
+
+pool:
+  name: Default
+
+variables:
+  solution: '**/*.sln'
+  buildConfiguration: 'Release'
+
+stages:
+# ==============================
+# BUILD STAGE (CI)
+# ==============================
+- stage: Build
+  displayName: Build Application
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: NuGetToolInstaller@1
+
+    - task: NuGetCommand@2
+      inputs:
+        restoreSolution: '$(solution)'
+
+    - task: VSBuild@1
+      inputs:
+        solution: '$(solution)'
+        configuration: '$(buildConfiguration)'
+
+    - task: VSTest@2
+      inputs:
+        configuration: '$(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish Web API
+      inputs:
+        command: publish
+        publishWebProjects: true
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish'
+        zipAfterPublish: true
+        modifyOutputPath: false
+
+    - powershell: |
+        $zips = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)/publish" -Filter "*.zip"
+        Write-Host "Found zips: $($zips.Count)"
+        foreach ($zip in $zips) { Write-Host $zip.FullName }
+        if ($zips.Count -gt 1) {
+          Copy-Item $zips[0].FullName "$(Build.ArtifactStagingDirectory)/publish/app.zip"
+          $zips | Remove-Item
+        } else {
+          Rename-Item $zips[0].FullName "app.zip"
+        }
+      displayName: Rename zip to app.zip
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish'
+        ArtifactName: drop
+
+# ==============================
+# DEPLOY TO DEV
+# ==============================
+- stage: Deploy_Dev
+  displayName: Deploy to Dev
+  dependsOn: Build
+  jobs:
+  - deployment: DeployDev
+    environment: dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appType: webApp
+              appName: 'ActionFilterAPI'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
+              deploymentMethod: zipDeploy
+
+# ==============================
+# DEPLOY TO QA
+# ==============================
+- stage: Deploy_QA
+  displayName: Deploy to QA
+  dependsOn: Deploy_Dev
+  jobs:
+  - deployment: DeployQA
+    environment: qa
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appType: webApp
+              appName: 'ActionFilterAPI'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
+              deploymentMethod: zipDeploy
+
+# ==============================
+# DEPLOY TO PRODUCTION
+# ==============================
+- stage: Deploy_Prod
+  displayName: Deploy to Production
+  dependsOn: Deploy_QA
+  jobs:
+  - deployment: DeployProd
+    environment: production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'action-filters-api'
+              appType: webApp
+              appName: 'ActionFilterAPI'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
+              deploymentMethod: zipDeploy
